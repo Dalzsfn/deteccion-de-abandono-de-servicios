@@ -12,6 +12,7 @@ decorator==5.2.1
 executing==2.2.1
 fastapi==0.136.1
 fonttools==4.62.1
+greenlet==3.5.0
 h11==0.16.0
 idna==3.13
 ipykernel==7.2.0
@@ -33,6 +34,7 @@ pillow==12.2.0
 platformdirs==4.9.6
 prompt_toolkit==3.0.52
 psutil==7.2.2
+psycopg2-binary==2.9.12
 pure_eval==0.2.3
 pydantic==2.13.3
 pydantic_core==2.46.3
@@ -44,6 +46,7 @@ scikit-learn==1.8.0
 scipy==1.17.1
 seaborn==0.13.2
 six==1.17.0
+SQLAlchemy==2.0.49
 stack-data==0.6.3
 starlette==1.0.0
 threadpoolctl==3.6.0

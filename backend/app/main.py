@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from backend.database.queries import get_clientes
 app = FastAPI()
 
 @app.get("/")
@@ -8,7 +8,7 @@ def read_root():
 
 @app.get("/clientes")
 def read_clientes():
-    return {"message": "Aquí se mostrarán los clientes"}
+    return get_clientes()
 
 @app.get("/predicciones")
 def read_predicciones():

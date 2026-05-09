@@ -1,6 +1,5 @@
 from sqlalchemy import text
-from database.connection import engine
-from urllib.parse import unquote
+from backend.database.connection import engine
 
 def get_clientes():
     with engine.connect() as connection:

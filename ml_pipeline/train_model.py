@@ -12,7 +12,7 @@ def entrenar_modelo():
     
     caida_frecuencia = df['Avg_class_frequency_total'] - df['Avg_class_frequency_current_month']
     df['caida_frecuencia'] = caida_frecuencia
-    X = df.drop(columns=['Churn', 'Avg_class_frequency_total'])
+    X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender'])
     y = df['Churn']
     
     # Entrenamiento del modelo 

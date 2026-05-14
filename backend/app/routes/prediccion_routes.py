@@ -8,8 +8,7 @@ router = APIRouter()
 def post_predicciones():
     try:
         clientes = get_clientes()
-        predicciones = ml_service.predecir_abandono
-        (clientes)
+        predicciones = ml_service.predecir_abandono(clientes)
         return {"predicciones": predicciones}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

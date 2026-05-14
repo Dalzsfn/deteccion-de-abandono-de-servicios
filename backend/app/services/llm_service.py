@@ -37,7 +37,6 @@ def generar_sugerencia(motivo):
     3. NUNCA menciones riesgos, abandono, ni probabilidades.
     
     Contexto del cliente:
-    - Nombre : {}
     - Problema: {instruccion_estrategica}
 
     Mensaje de Telegram:"""

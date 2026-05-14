@@ -13,8 +13,7 @@ El sistema busca optimizar la retención de socios mediante un enfoque proactivo
 A día de hoy, el proyecto se encuentra en su primera fase técnica:
 
 1.  Persistencia de Datos: Implementación de la base de datos en PostgreSQL para el almacenamiento y gestión del dataset sintético de gimnasio.
-2.  Procesamiento de Datos: Pipeline de limpieza y transformación de variables (ingeniería de características) desde la base de datos hacia el entorno de Python.
-3.  Modelo de Clasificación: Entrenamiento y validación inicial del algoritmo de clasificación (Random Forest) para identificar clientes con alta probabilidad de abandono.
+2.  Modelo de Clasificación: Entrenamiento y validación inicial del algoritmo de clasificación (Random Forest) para identificar clientes con alta probabilidad de abandono.
 
 ## Tecnologías Utilizadas
 

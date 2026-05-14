@@ -30,23 +30,24 @@ def generar_sugerencia(motivo):
 
 
     prompt= f"""Eres un asistente para retención de clientes en un gimnasio. Redacta UN SOLO mensaje de Telegram.
+    
     REGLAS ESTRICTAS:
     1. MÁXIMO 3 LÍNEAS.
     2. Tono amigable y persuasivo.
     3. NUNCA menciones riesgos, abandono, ni probabilidades.
-
+    
     Contexto del cliente:
+    - Nombre : {}
     - Problema: {instruccion_estrategica}
 
     Mensaje de Telegram:"""
 
-    modelo = ['phi3']
+    modelo = 'phi3'
 
-    print(f"Modelo: {modelo.upper()}")
     try:
         respuesta = ollama.chat(model=modelo, messages=[{'role': 'user', 'content': prompt}], options={'temperature': 0.1}) 
         mensaje = respuesta['message']['content']
-        print(f"{mensaje}\n{'-'*40}")
+        return mensaje
     except Exception as e:
         print(f"Error: {e}")
-    
+        return "Error al generar sugerencia."

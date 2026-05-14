@@ -24,7 +24,9 @@ def predecir_abandono(clientes):
                 {
                     "cliente_id": int(cliente_id),
                     "prediccion": int(prediccion),
-                    "probabilidad_abandono": float(probabilidad)
+                    "probabilidad_abandono": float(probabilidad),
+                    "motivo": motivo,
+                    "sugerencia": sugerencia
                 }
             )
     return resultados

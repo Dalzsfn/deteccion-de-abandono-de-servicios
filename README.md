@@ -57,7 +57,7 @@ El flujo de trabajo actual se describe en los siguientes pasos:
    pip install -r requirements.txt
 
 4. Configurar la base de datos:
-   Asegúrese de ejecutar el script SQL proporcionado en la carpeta /db para poblar las tablas con el dataset sintético.
+   Asegúrese de ejecutar el script SQL proporcionado en la carpeta /db (pendiente) para poblar las tablas con el dataset sintético.
 
 ## Próximos Pasos
 - Integración completa del módulo de generación de texto (LLM) mediante Ollama.

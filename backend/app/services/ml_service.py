@@ -27,7 +27,6 @@ def predecir_abandono(clientes):
                     "probabilidad_abandono": float(probabilidad),
                     "motivo": motivo,
                     "sugerencia": sugerencia
-                    dfgdfsgdfg
                 }
             )
     return resultados

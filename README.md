@@ -46,7 +46,7 @@ El flujo de trabajo actual se describe en los siguientes pasos:
 
 ### Instalación
 1. Clonar el repositorio:
-   git clone https://github.com/tu-usuario/gym-churn-ai.git
+   git clone https://github.com/Dalzsfn/deteccion-de-abandono-de-servicios.git
 
 2. Crear y activar un entorno virtual:
    python -m venv venv

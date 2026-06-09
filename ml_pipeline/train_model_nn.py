@@ -32,12 +32,11 @@ def entrenar_modelo():
     df = pd.read_csv(ruta_datos)
 
     df['caida_frecuencia'] = (df['Avg_class_frequency_total'] - df['Avg_class_frequency_current_month'])
-    X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender', 'Month_to_end_contract'])
+    X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender', 'Contract_period'])
     y = df['Churn']
 
     columnas_campana   = ['Age', 'Avg_class_frequency_current_month', 'caida_frecuencia']
-    columnas_sesgadas  = ['Lifetime', 'Avg_additional_charges_total',
-                          'Contract_period', 'Month_to_end_contract']
+    columnas_sesgadas  = ['Lifetime', 'Avg_additional_charges_total','Month_to_end_contract']
 
     preprocesador = ColumnTransformer(
         transformers=[

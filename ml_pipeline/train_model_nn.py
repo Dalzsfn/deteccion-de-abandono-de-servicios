@@ -3,10 +3,10 @@ from pathlib import Path
 import torch
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
 from torch import nn, optim
 from imblearn.over_sampling import SMOTE
 from torch.utils.data import TensorDataset, DataLoader
+
 
 class RedPrediccionChurn(nn.Module):
     def __init__(self, input_dim):
@@ -24,6 +24,7 @@ class RedPrediccionChurn(nn.Module):
     def forward(self, x):
         return self.network(x)
 
+
 def entrenar_modelo():
     directorio_actual = Path(__file__).resolve().parent
     ruta_datos = directorio_actual / 'data' / 'gym_churn_us.csv'
@@ -31,11 +32,12 @@ def entrenar_modelo():
     df = pd.read_csv(ruta_datos)
 
     df['caida_frecuencia'] = (df['Avg_class_frequency_total'] - df['Avg_class_frequency_current_month'])
-    X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender'])
+    X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender', 'Month_to_end_contract'])
     y = df['Churn']
 
-    columnas_campana = ['Age', 'Avg_class_frequency_current_month', 'caida_frecuencia']
-    columnas_sesgadas = ['Lifetime', 'Avg_additional_charges_total','Contract_period', 'Month_to_end_contract']
+    columnas_campana   = ['Age', 'Avg_class_frequency_current_month', 'caida_frecuencia']
+    columnas_sesgadas  = ['Lifetime', 'Avg_additional_charges_total',
+                          'Contract_period', 'Month_to_end_contract']
 
     preprocesador = ColumnTransformer(
         transformers=[
@@ -45,26 +47,20 @@ def entrenar_modelo():
         remainder='passthrough'
     )
 
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-
-    X_train = preprocesador.fit_transform(X_train)   
-    X_val   = preprocesador.transform(X_val)          
+    X_procesado = preprocesador.fit_transform(X)
 
     smote = SMOTE(random_state=42)
-    X_train, y_train = smote.fit_resample(X_train, y_train)
+    X_balanceado, y_balanceado = smote.fit_resample(X_procesado, y)
 
-    X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
-    y_train_tensor = torch.tensor(y_train.values, dtype=torch.long) 
-
-    X_val_tensor = torch.tensor(X_val, dtype=torch.float32)
-    y_val_tensor = torch.tensor(y_val.values, dtype=torch.long)
+    X_tensor = torch.tensor(X_balanceado, dtype=torch.float32)
+    y_tensor = torch.tensor(y_balanceado.values, dtype=torch.long)
 
     BATCH_SIZE = 64
-    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-    train_loader  = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    dataset     = TensorDataset(X_tensor, y_tensor)
+    train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-    num_caracteristicas = X_train.shape[1]
-    modelo     = RedPrediccionChurn(input_dim=num_caracteristicas)
+    num_caracteristicas = X_tensor.shape[1]
+    modelo      = RedPrediccionChurn(input_dim=num_caracteristicas)
     optimizador = optim.Adam(modelo.parameters(), lr=0.001)
     criterio    = nn.CrossEntropyLoss()
 
@@ -77,7 +73,7 @@ def entrenar_modelo():
         for lote_X, lote_y in train_loader:
             optimizador.zero_grad()
             predicciones = modelo(lote_X)
-            loss = criterio(predicciones, lote_y)   
+            loss = criterio(predicciones, lote_y)
             loss.backward()
             optimizador.step()
             loss_acumulada += loss.item() * lote_X.size(0)
@@ -85,18 +81,14 @@ def entrenar_modelo():
         loss_epoca = loss_acumulada / len(train_loader.dataset)
 
         if (epoch + 1) % 5 == 0 or epoch == 0:
-            modelo.eval()
-            with torch.no_grad():
-                pred_val       = modelo(X_val_tensor)
-                clases_predichas = torch.argmax(pred_val, dim=1)
-                accuracy = (clases_predichas == y_val_tensor).float().mean()
-            print(f"Epoch {epoch+1:>3}/{EPOCHS} | Loss: {loss_epoca:.4f} | Val Acc: {accuracy:.4f}")
+            print(f"Epoch {epoch+1:>3}/{EPOCHS} | Loss: {loss_epoca:.4f}")
 
     ruta_modelo = directorio_actual / 'modelo_churn.pth'
     torch.save({
-        'model_state_dict':     modelo.state_dict(),
-        'optimizer_state_dict': optimizador.state_dict(),
-        'input_dim':            num_caracteristicas,
+        'model_state_dict':      modelo.state_dict(),
+        'optimizer_state_dict':  optimizador.state_dict(),
+        'input_dim':             num_caracteristicas,
+        'preprocesador':         preprocesador,   
     }, ruta_modelo)
     print(f"Modelo guardado en: {ruta_modelo}")
 

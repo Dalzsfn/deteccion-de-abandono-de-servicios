@@ -31,12 +31,16 @@ def entrenar_modelo():
 
     df = pd.read_csv(ruta_datos)
 
-    df['caida_frecuencia'] = (df['Avg_class_frequency_total'] - df['Avg_class_frequency_current_month'])
-    X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender', 'Contract_period'])
+    caida_frecuencia = df['Avg_class_frequency_total'] - df['Avg_class_frequency_current_month']
+    df['caida_frecuencia'] = caida_frecuencia   
+    X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender'])
     y = df['Churn']
 
+
     columnas_campana   = ['Age', 'Avg_class_frequency_current_month', 'caida_frecuencia']
-    columnas_sesgadas  = ['Lifetime', 'Avg_additional_charges_total','Month_to_end_contract']
+    columnas_sesgadas = ['Lifetime', 'Avg_additional_charges_total',
+                     'Contract_period',  
+                     'Month_to_end_contract']
 
     preprocesador = ColumnTransformer(
         transformers=[
@@ -48,11 +52,11 @@ def entrenar_modelo():
 
     X_procesado = preprocesador.fit_transform(X)
 
-    smote = SMOTE(random_state=42)
+    smote = SMOTE()
     X_balanceado, y_balanceado = smote.fit_resample(X_procesado, y)
-
+    
     X_tensor = torch.tensor(X_balanceado, dtype=torch.float32)
-    y_tensor = torch.tensor(y_balanceado.values, dtype=torch.long)
+    y_tensor = torch.tensor(y_balanceado.values, dtype=torch.long)  
 
     BATCH_SIZE = 64
     dataset     = TensorDataset(X_tensor, y_tensor)
@@ -65,10 +69,10 @@ def entrenar_modelo():
 
     EPOCHS = 45
 
-    for epoch in range(EPOCHS):
-        modelo.train()
-        loss_acumulada = 0.0
 
+    for epoch in range(EPOCHS):
+        modelo.train() 
+        loss_acumulada = 0.0
         for lote_X, lote_y in train_loader:
             optimizador.zero_grad()
             predicciones = modelo(lote_X)
@@ -76,18 +80,18 @@ def entrenar_modelo():
             loss.backward()
             optimizador.step()
             loss_acumulada += loss.item() * lote_X.size(0)
-
-        loss_epoca = loss_acumulada / len(train_loader.dataset)
+        
+        loss_total_epoca = loss_acumulada / len(train_loader.dataset)
 
         if (epoch + 1) % 5 == 0 or epoch == 0:
-            print(f"Epoch {epoch+1:>3}/{EPOCHS} | Loss: {loss_epoca:.4f}")
+            print(f"Epoch {epoch+1:>3}/{EPOCHS} | Loss: {loss_total_epoca:.4f}")
 
     ruta_modelo = directorio_actual / 'modelo_churn.pth'
     torch.save({
         'model_state_dict':      modelo.state_dict(),
         'optimizer_state_dict':  optimizador.state_dict(),
         'input_dim':             num_caracteristicas,
-        'preprocesador':         preprocesador,   
+        'preprocesador':         preprocesador,
     }, ruta_modelo)
     print(f"Modelo guardado en: {ruta_modelo}")
 

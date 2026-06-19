@@ -1,8 +1,9 @@
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import torch
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from torch import nn, optim
 from imblearn.over_sampling import SMOTE
 from torch.utils.data import TensorDataset, DataLoader
@@ -31,29 +32,28 @@ def entrenar_modelo():
 
     df = pd.read_csv(ruta_datos)
 
-    caida_frecuencia = df['Avg_class_frequency_total'] - df['Avg_class_frequency_current_month']
-    df['caida_frecuencia'] = caida_frecuencia   
+    caida_frecuencia = (df['Avg_class_frequency_total'] - df['Avg_class_frequency_current_month']) / df['Avg_class_frequency_total'].replace(0, np.nan)
+    df['caida_frecuencia'] = caida_frecuencia.fillna(0)   
     X = df.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender'])
     y = df['Churn']
 
 
-    columnas_campana   = ['Age', 'Avg_class_frequency_current_month', 'caida_frecuencia']
-    columnas_sesgadas = ['Lifetime', 'Avg_additional_charges_total',
-                     'Contract_period',  
-                     'Month_to_end_contract']
+    columnas_orden = list(X.columns)
 
-    preprocesador = ColumnTransformer(
-        transformers=[
-            ('estandarizacion', StandardScaler(), columnas_campana),
-            ('normalizacion',   MinMaxScaler(),   columnas_sesgadas),
-        ],
-        remainder='passthrough'
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.3,
+        random_state=100,
+        stratify=y,
     )
 
-    X_procesado = preprocesador.fit_transform(X)
+    preprocesador = StandardScaler()
+    X_train = preprocesador.fit_transform(X_train)
+    X_test = preprocesador.transform(X_test)
 
-    smote = SMOTE()
-    X_balanceado, y_balanceado = smote.fit_resample(X_procesado, y)
+    smote = SMOTE(random_state=42)
+    X_balanceado, y_balanceado = smote.fit_resample(X_train, y_train)
     
     X_tensor = torch.tensor(X_balanceado, dtype=torch.float32)
     y_tensor = torch.tensor(y_balanceado.values, dtype=torch.long)  
@@ -92,6 +92,7 @@ def entrenar_modelo():
         'optimizer_state_dict':  optimizador.state_dict(),
         'input_dim':             num_caracteristicas,
         'preprocesador':         preprocesador,
+        'columnas_orden':        columnas_orden,
     }, ruta_modelo)
     print(f"Modelo guardado en: {ruta_modelo}")
 

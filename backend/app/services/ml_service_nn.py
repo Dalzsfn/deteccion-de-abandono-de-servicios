@@ -11,7 +11,6 @@ MODEL_PATH = BASE_DIR / "ml_pipeline" / "modelo_churn.pth"
 
 checkpoint     = torch.load(MODEL_PATH, weights_only=False)
 preprocesador  = checkpoint['preprocesador']
-columnas_orden = checkpoint.get('columnas_orden')
 
 modelo = RedPrediccionChurn(input_dim=checkpoint['input_dim'])
 modelo.load_state_dict(checkpoint['model_state_dict'])
@@ -54,9 +53,6 @@ _df_background['caida_frecuencia'] = _caida_frecuencia.fillna(0)
 
 # Preparar columnas iguales a entrenamiento
 _X_background = _df_background.drop(columns=['Churn', 'Avg_class_frequency_total', 'Phone', 'gender'])
-if columnas_orden is None:
-    columnas_orden = list(_X_background.columns)
-_X_background = _X_background[columnas_orden]
 _background_procesado = preprocesador.transform(_X_background)
 _columnas_features = list(_X_background.columns)
 

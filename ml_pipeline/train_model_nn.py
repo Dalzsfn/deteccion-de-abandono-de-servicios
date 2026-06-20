@@ -44,7 +44,7 @@ def entrenar_modelo():
     X = df.drop(columns=['Churn','Phone', 'gender'])
     y = df['Churn']
 
-    columnas_campana = ['Age','Avg_class_frequency_current_month']
+    columnas_campana = ['Age','Avg_class_frequency_current_month', 'Avg_class_frequency_total']
     columnas_sesgadas_o_fijas = ['Lifetime', 'Avg_additional_charges_total', 'Contract_period', 'Month_to_end_contract']
 
     preprocesador = ColumnTransformer(transformers=[('estandarizacion', StandardScaler(), columnas_campana),('normalizacion', MinMaxScaler(), columnas_sesgadas_o_fijas)

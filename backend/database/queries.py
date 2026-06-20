@@ -3,7 +3,7 @@ from backend.database.connection import engine
 
 def get_clientes():
     with engine.connect() as connection:
-        query = text("SELECT * FROM vista_entrenamiento_ml;")  
+        query = text("SELECT * FROM vista_clientes;")  
         result = connection.execute(query)
         return [dict(row) for row in result.mappings()]
     

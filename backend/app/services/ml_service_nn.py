@@ -99,10 +99,7 @@ def predecir_abandono(clientes: list[dict]) -> list[dict]:
 
             features_principales = [
                 {
-                    "feature":         _columnas_features[idx],
                     "feature_legible": obtener_nombre_legible(_columnas_features[idx]),
-                    "impacto":         round(float(shap_clase_abandono[idx]), 4),
-                    "valor":           round(float(datos_procesados[0, idx]), 4),
                 }
                 for idx in top_2_indices
             ]

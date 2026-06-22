@@ -12,3 +12,5 @@ def post_predicciones():
         return {"predicciones": predicciones}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+#Añadir información del shap para los clientes de riesgo

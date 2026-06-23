@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from backend.app.routes import clientes_riesgo_routes, clientes_routes
-from backend.database.queries import get_clientes
 
 app = FastAPI(title="API de Retención de Gimnasio")
 

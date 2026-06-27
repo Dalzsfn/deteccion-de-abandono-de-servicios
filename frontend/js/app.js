@@ -35,9 +35,12 @@ const els = {
 
 function updateMeta() {
   const atRisk = [...state.riskMap.values()].filter((r) => r === "alto").length;
-  els.clientCount.textContent = `${state.clientes.length} socios`;
+  const displayed = state.modelExecuted ? atRisk : state.clientes.length;
+  els.clientCount.textContent = state.modelExecuted
+    ? `${displayed} socios en riesgo`
+    : `${displayed} socios`;
   els.riskCount.textContent = state.modelExecuted
-    ? `${atRisk} en riesgo`
+    ? `de ${state.clientes.length} totales`
     : "— en riesgo";
 }
 
@@ -74,17 +77,29 @@ function updateModelStatus(mode) {
   }
 }
 
+function getDisplayedClients() {
+  if (!state.modelExecuted) return state.clientes;
+  return state.clientes.filter(
+    (c) => state.riskMap.get(c.cliente_id) === "alto"
+  );
+}
+
 function paintGrid() {
+  const displayClients = getDisplayedClients();
   const { html, visible } = renderClientsGrid(
-    state.clientes,
+    displayClients,
     state.riskMap,
     state.searchQuery
   );
 
   const render = () => {
-    if (visible === 0 && state.clientes.length > 0) {
+    if (visible === 0 && displayClients.length > 0) {
       els.clientsGrid.hidden = true;
       els.emptyState.hidden = false;
+    } else if (displayClients.length === 0 && state.modelExecuted) {
+      els.clientsGrid.hidden = true;
+      els.emptyState.hidden = false;
+      els.emptyState.textContent = "No se detectaron socios en riesgo de abandono.";
     } else {
       els.emptyState.hidden = true;
       els.clientsGrid.hidden = false;

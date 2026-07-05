@@ -224,6 +224,9 @@ function bindTelegramButton() {
   if (!btn || btn.disabled) return;
 
   const clienteId = Number(btn.dataset.clienteId);
+  // El mensaje exacto que se mostró en pantalla viaja en data-mensaje;
+  // fue generado por el LLM al abrir el detalle y no se recalcula aquí.
+  const mensaje = btn.dataset.mensaje ?? "";
 
   btn.addEventListener("click", async () => {
     btn.disabled = true;
@@ -231,7 +234,7 @@ function bindTelegramButton() {
     btn.innerHTML = `<span class="loader-ring" style="width:1.1rem;height:1.1rem;border-width:2px"></span> Enviando…`;
 
     try {
-      await postEnviarSugerencia(clienteId);
+      await postEnviarSugerencia(clienteId, mensaje);
 
       btn.classList.add("is-sent");
       btn.innerHTML = `

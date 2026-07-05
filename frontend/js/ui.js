@@ -114,10 +114,20 @@ function formatNumber(value, suffix = "") {
   return `${num}${suffix}`;
 }
 
+/** Escapa caracteres especiales para uso seguro dentro de atributos HTML. */
+function escapeAttr(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 /**
  * Renderiza el contenido del modal para un cliente en riesgo.
- * @param {object} cliente  - Datos completos del cliente desde la vista
- * @param {object} detalle  - Respuesta de GET /api/ml/predicciones/{id}
+ * @param {object} cliente   - Datos completos del cliente desde la vista
+ * @param {object} detalle   - Respuesta de GET /api/ml/predicciones/{id}
  * @param {boolean} yaEnviada - True si ya hay una sugerencia enviada para este cliente
  */
 export function renderDetalleContent(cliente, detalle, yaEnviada = false) {
@@ -134,7 +144,9 @@ export function renderDetalleContent(cliente, detalle, yaEnviada = false) {
         ${CHECK_SVG}
         ✓ Ya enviada
        </button>`
-    : `<button type="button" class="btn btn-telegram" id="telegramBtn" data-cliente-id="${cliente.cliente_id}">
+    : `<button type="button" class="btn btn-telegram" id="telegramBtn"
+          data-cliente-id="${cliente.cliente_id}"
+          data-mensaje="${escapeAttr(detalle.sugerencia_retencion)}">
         ${TELEGRAM_SVG}
         Enviar promoción por Telegram
        </button>`;

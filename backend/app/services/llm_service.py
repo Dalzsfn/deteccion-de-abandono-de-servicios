@@ -34,7 +34,7 @@ def generar_sugerencia(motivo):
     REGLAS ESTRICTAS:
     1. MÁXIMO 3 LÍNEAS.
     2. Tono amigable y persuasivo.
-    3. NUNCA menciones riesgos, abandono, ni probabilidades.
+    3. NUNCA menciones riesgos, abandono, probabilidades ni hashtags.
 
     Contexto del cliente:
     - Problema: {instruccion_estrategica}

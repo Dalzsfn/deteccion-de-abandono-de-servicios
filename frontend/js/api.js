@@ -38,8 +38,12 @@ export function fetchDetallePrediccion(clienteId) {
   return request(ENDPOINTS.detalle(clienteId));
 }
 
-export function postEnviarSugerencia(clienteId) {
-  return request(ENDPOINTS.enviarSugerencia(clienteId), { method: "POST" });
+export function postEnviarSugerencia(clienteId, mensaje) {
+  return request(ENDPOINTS.enviarSugerencia(clienteId), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mensaje }),
+  });
 }
 
 export function fetchSugerenciasEnviadas() {

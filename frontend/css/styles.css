@@ -704,6 +704,109 @@
     font-size: 0.9rem;
   }
 
+  /* ── Sent suggestions panel ── */
+  .sent-section {
+    border-top: 1px solid var(--line);
+    padding-top: var(--space-md);
+  }
+
+  .sent-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    transition: color var(--transition), background var(--transition), border-color var(--transition);
+  }
+
+  .sent-toggle:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+    border-color: color-mix(in oklab, var(--lime) 25%, transparent);
+  }
+
+  .sent-toggle__icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+    color: color-mix(in oklab, #229ed9 80%, transparent);
+  }
+
+  .sent-toggle__chevron {
+    width: 1rem;
+    height: 1rem;
+    margin-left: auto;
+    transition: transform var(--transition);
+  }
+
+  .sent-toggle[aria-expanded="true"] .sent-toggle__chevron {
+    transform: rotate(180deg);
+  }
+
+  .sent-panel {
+    margin-top: var(--space-sm);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    animation: slide-in 200ms ease;
+  }
+
+  .sent-list {
+    display: grid;
+    gap: 0;
+  }
+
+  .sent-row {
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) minmax(0, 3fr) auto;
+    gap: var(--space-md);
+    align-items: start;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .sent-row:last-child { border-bottom: none; }
+  .sent-row:nth-child(even) { background: color-mix(in oklab, var(--surface-raised) 40%, transparent); }
+
+  .sent-row__name {
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+
+  .sent-row__msg {
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+
+  .sent-row__date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .sent-empty {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+
+  @container clients (max-width: 519px) {
+    .sent-row {
+      grid-template-columns: 1fr;
+      gap: var(--space-xs);
+    }
+  }
+
   /* ── Toast ── */
   .toast-stack {
     position: fixed;

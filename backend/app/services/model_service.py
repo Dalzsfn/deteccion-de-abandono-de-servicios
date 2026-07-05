@@ -25,8 +25,8 @@ FEATURES_LEGIBLES = {
     "Avg_additional_charges_total": "Gasto en servicios adicionales",
     "Month_to_end_contract": "Meses restantes de contrato",
     "Lifetime": "Antigüedad como cliente",
-    "Avg_class_frequency_total": "Frecuencia promedio histórica de clases",
-    "Avg_class_frequency_current_month": "Frecuencia de clases este mes",
+    "Avg_class_frequency_total": "Frecuencia promedio histórica de asistencias",
+    "Avg_class_frequency_current_month": "Frecuencia de asistencia este mes",
     "caida_frecuencia": "Caída en la frecuencia de asistencia",
 }
 

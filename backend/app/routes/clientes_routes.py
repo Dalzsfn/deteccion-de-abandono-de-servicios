@@ -6,5 +6,3 @@ router = APIRouter()
 @router.get("/clientes")
 def read_clientes():
     return get_clientes()
-
-# Añadir cliente por id

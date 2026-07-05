@@ -12,6 +12,14 @@ const RISK_LABELS = {
   alto: "Riesgo alto",
 };
 
+const TELEGRAM_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+</svg>`;
+
+const CHECK_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" width="20" height="20">
+  <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+</svg>`;
+
 export function deriveMembership(cliente) {
   const monthsLeft = Number(cliente.Month_to_end_contract ?? 0);
   const contractMonths = Number(cliente.Contract_period ?? 0);
@@ -106,7 +114,13 @@ function formatNumber(value, suffix = "") {
   return `${num}${suffix}`;
 }
 
-export function renderDetalleContent(cliente, detalle) {
+/**
+ * Renderiza el contenido del modal para un cliente en riesgo.
+ * @param {object} cliente  - Datos completos del cliente desde la vista
+ * @param {object} detalle  - Respuesta de GET /api/ml/predicciones/{id}
+ * @param {boolean} yaEnviada - True si ya hay una sugerencia enviada para este cliente
+ */
+export function renderDetalleContent(cliente, detalle, yaEnviada = false) {
   const membership = deriveMembership(cliente);
   const probPct = Math.round(detalle.probabilidad_abandono * 100);
   const features = detalle.features_principales ?? [];
@@ -114,6 +128,16 @@ export function renderDetalleContent(cliente, detalle) {
   const featuresHtml = features
     .map((f) => `<li class="feature-chip">${f.feature_legible}</li>`)
     .join("");
+
+  const telegramBtnHtml = yaEnviada
+    ? `<button type="button" class="btn btn-telegram is-sent" id="telegramBtn" disabled>
+        ${CHECK_SVG}
+        ✓ Ya enviada
+       </button>`
+    : `<button type="button" class="btn btn-telegram" id="telegramBtn" data-cliente-id="${cliente.cliente_id}">
+        ${TELEGRAM_SVG}
+        Enviar promoción por Telegram
+       </button>`;
 
   return `
     <div class="score-block">
@@ -162,12 +186,7 @@ export function renderDetalleContent(cliente, detalle) {
     <section class="action-block">
       <h3>Acción recomendada</h3>
       <p>${detalle.sugerencia_retencion}</p>
-      <button type="button" class="btn btn-telegram" id="telegramBtn">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
-        </svg>
-        Enviar sugerencia por Telegram
-      </button>
+      ${telegramBtnHtml}
     </section>
   `;
 }
@@ -204,13 +223,36 @@ export function renderStableContent(cliente) {
   `;
 }
 
+export function renderSugerenciasEnviadas(sugerencias) {
+  if (sugerencias.length === 0) {
+    return `<p class="sent-empty">Todavía no se ha enviado ninguna sugerencia.</p>`;
+  }
+
+  const rows = sugerencias
+    .map((s) => {
+      const fecha = new Date(s.fecha_envio).toLocaleString("es-EC", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+      return `
+        <li class="sent-row">
+          <div class="sent-row__name">${s.nombre}</div>
+          <div class="sent-row__msg">${s.mensaje_enviado}</div>
+          <time class="sent-row__date" datetime="${s.fecha_envio}">${fecha}</time>
+        </li>
+      `;
+    })
+    .join("");
+
+  return `<ul class="sent-list">${rows}</ul>`;
+}
+
 export function showToast(message, durationMs = 2400) {
   const stack = document.getElementById("toastStack");
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.textContent = message;
   stack.appendChild(toast);
-
   setTimeout(() => toast.remove(), durationMs);
 }
 
@@ -235,29 +277,4 @@ export function withViewTransition(callback) {
     return;
   }
   callback();
-}
-
-export function bindTelegramButton() {
-  const btn = document.getElementById("telegramBtn");
-  if (!btn) return;
-
-  btn.addEventListener("click", () => {
-    // TODO: conectar integración real de Telegram
-    const original = btn.innerHTML;
-    btn.classList.add("is-sent");
-    btn.innerHTML = `
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" width="20" height="20">
-        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
-      </svg>
-      ✓ Enviado
-    `;
-    btn.disabled = true;
-    showToast("Sugerencia marcada como enviada (simulación)");
-
-    setTimeout(() => {
-      btn.classList.remove("is-sent");
-      btn.innerHTML = original;
-      btn.disabled = false;
-    }, 2000);
-  });
 }

@@ -1,36 +1,48 @@
-import { fetchClientes, runPredicciones, fetchDetallePrediccion } from "./api.js";
+import {
+  fetchClientes,
+  runPredicciones,
+  fetchDetallePrediccion,
+  postEnviarSugerencia,
+  fetchSugerenciasEnviadas,
+} from "./api.js";
 import {
   renderClientsGrid,
   renderDetalleContent,
   renderStableContent,
+  renderSugerenciasEnviadas,
   setAlert,
   withViewTransition,
-  bindTelegramButton,
+  showToast,
 } from "./ui.js";
 
 const state = {
   clientes: [],
-  riskMap: new Map(),
+  riskMap: new Map(),         
   modelExecuted: false,
   searchQuery: "",
   isRunningModel: false,
+  enviadas: new Set(),        
+  sentListVisible: false,
 };
 
 const els = {
-  clientsGrid: document.getElementById("clientsGrid"),
-  clientsPanel: document.getElementById("clientsPanel"),
-  panelLoading: document.getElementById("panelLoading"),
-  emptyState: document.getElementById("emptyState"),
-  searchInput: document.getElementById("searchInput"),
-  runModelBtn: document.getElementById("runModelBtn"),
-  modelStatus: document.getElementById("modelStatus"),
-  clientCount: document.getElementById("clientCount"),
-  riskCount: document.getElementById("riskCount"),
-  detailDialog: document.getElementById("detailDialog"),
+  clientsGrid:    document.getElementById("clientsGrid"),
+  clientsPanel:   document.getElementById("clientsPanel"),
+  panelLoading:   document.getElementById("panelLoading"),
+  emptyState:     document.getElementById("emptyState"),
+  searchInput:    document.getElementById("searchInput"),
+  runModelBtn:    document.getElementById("runModelBtn"),
+  modelStatus:    document.getElementById("modelStatus"),
+  clientCount:    document.getElementById("clientCount"),
+  riskCount:      document.getElementById("riskCount"),
+  detailDialog:   document.getElementById("detailDialog"),
   closeDialogBtn: document.getElementById("closeDialogBtn"),
-  dialogTitle: document.getElementById("dialogTitle"),
-  dialogLoading: document.getElementById("dialogLoading"),
-  dialogContent: document.getElementById("dialogContent"),
+  dialogTitle:    document.getElementById("dialogTitle"),
+  dialogLoading:  document.getElementById("dialogLoading"),
+  dialogContent:  document.getElementById("dialogContent"),
+  sentToggleBtn:  document.getElementById("sentToggleBtn"),
+  sentPanel:      document.getElementById("sentPanel"),
+  sentBody:       document.getElementById("sentBody"),
 };
 
 function updateMeta() {
@@ -45,7 +57,7 @@ function updateMeta() {
 }
 
 function updateModelStatus(mode) {
-  const dot = els.modelStatus.querySelector(".status-dot");
+  const dot   = els.modelStatus.querySelector(".status-dot");
   const label = els.modelStatus.querySelector("span:last-child");
 
   dot.className = "status-dot";
@@ -93,13 +105,14 @@ function paintGrid() {
   );
 
   const render = () => {
-    if (visible === 0 && displayClients.length > 0) {
-      els.clientsGrid.hidden = true;
-      els.emptyState.hidden = false;
-    } else if (displayClients.length === 0 && state.modelExecuted) {
+    if (displayClients.length === 0 && state.modelExecuted) {
       els.clientsGrid.hidden = true;
       els.emptyState.hidden = false;
       els.emptyState.textContent = "No se detectaron socios en riesgo de abandono.";
+    } else if (visible === 0 && displayClients.length > 0) {
+      els.clientsGrid.hidden = true;
+      els.emptyState.hidden = false;
+      els.emptyState.textContent = "No hay socios que coincidan con tu búsqueda.";
     } else {
       els.emptyState.hidden = true;
       els.clientsGrid.hidden = false;
@@ -113,8 +126,8 @@ function paintGrid() {
 
 async function loadClientes() {
   els.panelLoading.hidden = false;
-  els.clientsGrid.hidden = true;
-  els.emptyState.hidden = true;
+  els.clientsGrid.hidden  = true;
+  els.emptyState.hidden   = true;
   setAlert(null);
 
   try {
@@ -163,19 +176,86 @@ async function handleRunModel() {
   }
 }
 
+async function loadSugerenciasEnviadas() {
+  els.sentBody.innerHTML = `
+    <div class="panel-loading" style="padding: 1.5rem">
+      <div class="loader-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    </div>`;
+
+  try {
+    const data = await fetchSugerenciasEnviadas();
+    const lista = data.sugerencias ?? [];
+
+    state.enviadas = new Set(lista.map((s) => s.cliente_id));
+    els.sentBody.innerHTML = renderSugerenciasEnviadas(lista);
+  } catch (error) {
+    els.sentBody.innerHTML = `<p class="sent-empty" style="color:var(--danger)">Error cargando: ${error.message}</p>`;
+  }
+}
+
+function toggleSentPanel() {
+  state.sentListVisible = !state.sentListVisible;
+  els.sentPanel.hidden = !state.sentListVisible;
+  els.sentToggleBtn.setAttribute("aria-expanded", String(state.sentListVisible));
+
+  if (state.sentListVisible) {
+    loadSugerenciasEnviadas();
+  }
+}
+
+// ── Modal de detalle ──────────────────────────────────────────────────────────
 function showDialogLoading(title) {
-  els.dialogTitle.textContent = title;
-  els.dialogLoading.hidden = false;
-  els.dialogContent.hidden = true;
-  els.dialogContent.innerHTML = "";
+  els.dialogTitle.textContent   = title;
+  els.dialogLoading.hidden      = false;
+  els.dialogContent.hidden      = true;
+  els.dialogContent.innerHTML   = "";
 }
 
 function showDialogContent(title, html) {
   els.dialogTitle.textContent = title;
-  els.dialogLoading.hidden = true;
-  els.dialogContent.hidden = false;
+  els.dialogLoading.hidden    = true;
+  els.dialogContent.hidden    = false;
   els.dialogContent.innerHTML = html;
   bindTelegramButton();
+}
+
+function bindTelegramButton() {
+  const btn = document.getElementById("telegramBtn");
+  if (!btn || btn.disabled) return;
+
+  const clienteId = Number(btn.dataset.clienteId);
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = `<span class="loader-ring" style="width:1.1rem;height:1.1rem;border-width:2px"></span> Enviando…`;
+
+    try {
+      await postEnviarSugerencia(clienteId);
+
+      btn.classList.add("is-sent");
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" width="20" height="20">
+          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+        </svg>
+        ✓ Ya enviada
+      `;
+      state.enviadas.add(clienteId);
+      showToast("Promoción enviada por Telegram ✓");
+    } catch (error) {
+      btn.disabled = false;
+      btn.innerHTML = original;
+
+      let detailObj = null;
+      try { detailObj = JSON.parse(error.message); } catch { /* noop */ }
+
+      if (detailObj?.error === "sin_telegram") {
+        showToast(detailObj.mensaje, 6000);
+      } else {
+        showToast(`Error: ${error.message}`, 4000);
+      }
+    }
+  });
 }
 
 async function openClientDetail(clienteId) {
@@ -211,7 +291,8 @@ async function openClientDetail(clienteId) {
 
   try {
     const detalle = await fetchDetallePrediccion(clienteId);
-    showDialogContent(cliente.nombre, renderDetalleContent(cliente, detalle));
+    const yaEnviada = state.enviadas.has(clienteId);
+    showDialogContent(cliente.nombre, renderDetalleContent(cliente, detalle, yaEnviada));
   } catch (error) {
     showDialogContent(
       cliente.nombre,
@@ -250,7 +331,15 @@ function bindEvents() {
     event.preventDefault();
     els.detailDialog.close();
   });
+
+  els.sentToggleBtn?.addEventListener("click", toggleSentPanel);
 }
 
 bindEvents();
 loadClientes();
+
+fetchSugerenciasEnviadas()
+  .then((data) => {
+    state.enviadas = new Set((data.sugerencias ?? []).map((s) => s.cliente_id));
+  })
+  .catch(() => {/* silencioso — no es crítico al arrancar */});

@@ -6,6 +6,8 @@
 BEGIN;
 
 DROP VIEW IF EXISTS vista_clientes;
+DROP TABLE IF EXISTS sugerencias_enviadas CASCADE;
+DROP TABLE IF EXISTS telegram_links CASCADE;
 DROP TABLE IF EXISTS asistencias CASCADE;
 DROP TABLE IF EXISTS compras CASCADE;
 DROP TABLE IF EXISTS suscripcion CASCADE;
@@ -38,6 +40,25 @@ CREATE TABLE clientes (
     promo_amigos  BOOLEAN NOT NULL DEFAULT FALSE,
     visitas_grupo BOOLEAN NOT NULL DEFAULT FALSE,
     edad          SMALLINT NOT NULL CHECK (edad BETWEEN 12 AND 100)
+);
+
+-- ------------------------------------------------------------
+-- TABLA: telegram_links
+-- ------------------------------------------------------------
+CREATE TABLE telegram_links (
+    cliente_id    INTEGER PRIMARY KEY REFERENCES clientes(cliente_id),
+    chat_id       BIGINT NOT NULL UNIQUE,
+    fecha_vinculacion TIMESTAMP DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------
+-- TABLA: sugerencias_enviadas
+-- ------------------------------------------------------------
+CREATE TABLE sugerencias_enviadas (
+    id               SERIAL PRIMARY KEY,
+    cliente_id       INTEGER NOT NULL UNIQUE REFERENCES clientes(cliente_id),
+    mensaje_enviado  TEXT NOT NULL,
+    fecha_envio      TIMESTAMP DEFAULT NOW()
 );
 
 -- ------------------------------------------------------------

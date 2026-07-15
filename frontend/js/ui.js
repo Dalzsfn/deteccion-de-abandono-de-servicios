@@ -83,25 +83,96 @@ export function renderClientCard(cliente, riskLevel = "pendiente") {
   `;
 }
 
-export function renderClientsGrid(clientes, riskMap, query = "") {
+export const PAGE_SIZE = 12;
+
+export function renderPagination(currentPage, totalPages, totalFiltered) {
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalFiltered);
+
+  const prevDisabled = currentPage <= 1 ? " disabled" : "";
+  const nextDisabled = currentPage >= totalPages ? " disabled" : "";
+
+  return `
+    <div class="pagination__info">
+      Mostrando <strong>${start}–${end}</strong> de <strong>${totalFiltered}</strong> socios
+    </div>
+    <div class="pagination__controls">
+      <button
+        type="button"
+        class="pagination__btn"
+        data-page="prev"
+        aria-label="Página anterior"
+        ${prevDisabled}
+      >
+        ‹ Anterior
+      </button>
+      <span class="pagination__status" aria-live="polite">
+        Página ${currentPage} de ${totalPages}
+      </span>
+      <button
+        type="button"
+        class="pagination__btn"
+        data-page="next"
+        aria-label="Página siguiente"
+        ${nextDisabled}
+      >
+        Siguiente ›
+      </button>
+    </div>
+  `;
+}
+
+export function renderClientsGrid(
+  clientes,
+  riskMap,
+  query = "",
+  page = 1,
+  pageSize = PAGE_SIZE
+) {
   const normalizedQuery = query.trim().toLowerCase();
 
   const filtered = clientes.filter((c) =>
     c.nombre.toLowerCase().includes(normalizedQuery)
   );
 
-  if (filtered.length === 0) {
-    return { html: "", count: 0, visible: 0 };
+  const totalFiltered = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+
+  if (totalFiltered === 0) {
+    return {
+      html: "",
+      visible: 0,
+      totalFiltered: 0,
+      totalPages: 1,
+      currentPage: 1,
+      paginationHtml: "",
+    };
   }
 
-  const html = filtered
+  const start = (safePage - 1) * pageSize;
+  const paged = filtered.slice(start, start + pageSize);
+
+  const html = paged
     .map((cliente) => {
       const risk = riskMap.get(cliente.cliente_id) ?? "pendiente";
       return renderClientCard(cliente, risk);
     })
     .join("");
 
-  return { html, count: clientes.length, visible: filtered.length };
+  const paginationHtml =
+    totalPages > 1
+      ? renderPagination(safePage, totalPages, totalFiltered)
+      : "";
+
+  return {
+    html,
+    visible: totalFiltered,
+    totalFiltered,
+    totalPages,
+    currentPage: safePage,
+    paginationHtml,
+  };
 }
 
 function formatBool(value) {

@@ -1,4 +1,5 @@
-import ollama
+import os
+from openai import OpenAI
 
 estrategias_retencion = {
     "Near_Location": "Instrucción: El cliente no vive ni trabaja cerca del gimnasio, lo que dificulta su asistencia. Ofrécele acceso gratuito a las clases virtuales premium para que entrene desde casa cuando no pueda viajar.",
@@ -41,12 +42,25 @@ def generar_sugerencia(motivo):
 
     Mensaje de Telegram:"""
 
-    modelo = 'phi3'
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        print("[LLM] OPENROUTER_API_KEY no configurada. No se puede generar sugerencia.")
+        return "Servicio de sugerencias no disponible. Configure OPENROUTER_API_KEY."
+
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+    )
 
     try:
-        respuesta = ollama.chat(model=modelo, messages=[{'role': 'user', 'content': prompt}], options={'temperature': 0.1})
-        mensaje = respuesta['message']['content']
+        respuesta = client.chat.completions.create(
+            model="openai/gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=200,
+        )
+        mensaje = respuesta.choices[0].message.content.strip()
         return mensaje
     except Exception as e:
-        print(f"Error: {e}")
-        return "Error al generar sugerencia."
+        print(f"[LLM] Error al conectar con OpenRouter: {e}")
+        return "Error al generar sugerencia. Verifique su conexión o clave de API."

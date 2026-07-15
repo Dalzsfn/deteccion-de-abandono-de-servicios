@@ -507,6 +507,66 @@
     height: 1rem;
   }
 
+  /* ── Pagination ── */
+  .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--line);
+  }
+
+  .pagination__info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .pagination__info strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .pagination__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .pagination__status {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    min-width: 7rem;
+    text-align: center;
+  }
+
+  .pagination__btn {
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    transition:
+      background var(--transition),
+      border-color var(--transition),
+      color var(--transition);
+  }
+
+  .pagination__btn:hover:not(:disabled) {
+    background: var(--surface-hover);
+    border-color: color-mix(in oklab, var(--lime) 30%, transparent);
+  }
+
+  .pagination__btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
   /* ── Empty state ── */
   .empty-state {
     text-align: center;

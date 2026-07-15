@@ -10,13 +10,10 @@ logger = logging.getLogger(__name__)
 _application: Application | None = None
 
 
-def get_bot_token() -> str:
+def get_bot_token() -> str | None:
     token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     if not token:
-        raise RuntimeError(
-            "TELEGRAM_BOT_TOKEN no está definido. "
-            "Añade el token en backend/.env antes de iniciar el servidor."
-        )
+        return None
     return token
 
 
@@ -58,6 +55,10 @@ async def _handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     numero_raw = contacto.phone_number  
     numero_normalizado = normalizar_numero(numero_raw)
 
+    print(f"\n\n==========================================")
+    print(f"👉👉👉 ¡AQUÍ ESTÁ TU CHAT ID!: {chat_id} 👈👈👈")
+    print(f"==========================================\n\n")
+    
     logger.info(
         "Contacto recibido: raw=%s normalizado=%s chat_id=%s",
         numero_raw,
@@ -99,6 +100,10 @@ async def send_message(chat_id: int, text: str) -> None:
 async def startup() -> None:
     global _application
     token = get_bot_token()
+    if not token:
+        logger.warning("TELEGRAM_BOT_TOKEN no configurado. El bot de Telegram estará desactivado.")
+        return
+        
     _application = Application.builder().token(token).build()
     _application.add_handler(CommandHandler("start", _handle_start))
     _application.add_handler(MessageHandler(filters.CONTACT, _handle_contact))

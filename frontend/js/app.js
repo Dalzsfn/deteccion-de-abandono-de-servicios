@@ -17,16 +17,18 @@ import {
 
 const state = {
   clientes: [],
-  riskMap: new Map(),         
+  riskMap: new Map(),
   modelExecuted: false,
   searchQuery: "",
+  currentPage: 1,
   isRunningModel: false,
-  enviadas: new Set(),        
+  enviadas: new Set(),
   sentListVisible: false,
 };
 
 const els = {
   clientsGrid:    document.getElementById("clientsGrid"),
+  pagination:     document.getElementById("pagination"),
   clientsPanel:   document.getElementById("clientsPanel"),
   panelLoading:   document.getElementById("panelLoading"),
   emptyState:     document.getElementById("emptyState"),
@@ -98,25 +100,38 @@ function getDisplayedClients() {
 
 function paintGrid() {
   const displayClients = getDisplayedClients();
-  const { html, visible } = renderClientsGrid(
+  const { html, visible, currentPage, paginationHtml } = renderClientsGrid(
     displayClients,
     state.riskMap,
-    state.searchQuery
+    state.searchQuery,
+    state.currentPage
   );
+
+  state.currentPage = currentPage;
 
   const render = () => {
     if (displayClients.length === 0 && state.modelExecuted) {
       els.clientsGrid.hidden = true;
+      els.pagination.hidden = true;
       els.emptyState.hidden = false;
       els.emptyState.textContent = "No se detectaron socios en riesgo de abandono.";
     } else if (visible === 0 && displayClients.length > 0) {
       els.clientsGrid.hidden = true;
+      els.pagination.hidden = true;
       els.emptyState.hidden = false;
       els.emptyState.textContent = "No hay socios que coincidan con tu búsqueda.";
     } else {
       els.emptyState.hidden = true;
       els.clientsGrid.hidden = false;
       els.clientsGrid.innerHTML = html;
+
+      if (paginationHtml) {
+        els.pagination.hidden = false;
+        els.pagination.innerHTML = paginationHtml;
+      } else {
+        els.pagination.hidden = true;
+        els.pagination.innerHTML = "";
+      }
     }
     updateMeta();
   };
@@ -162,6 +177,7 @@ async function handleRunModel() {
     }
 
     state.modelExecuted = true;
+    state.currentPage = 1;
     updateModelStatus("ready");
     paintGrid();
     setAlert(
@@ -309,7 +325,22 @@ function bindEvents() {
 
   els.searchInput.addEventListener("input", (event) => {
     state.searchQuery = event.target.value;
+    state.currentPage = 1;
     paintGrid();
+  });
+
+  els.pagination.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-page]");
+    if (!btn || btn.disabled) return;
+
+    const action = btn.dataset.page;
+    if (action === "prev") {
+      state.currentPage = Math.max(1, state.currentPage - 1);
+    } else if (action === "next") {
+      state.currentPage += 1;
+    }
+    paintGrid();
+    els.clientsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   els.clientsGrid.addEventListener("click", (event) => {
